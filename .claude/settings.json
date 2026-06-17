@@ -1,0 +1,63 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -u admin:admin123 http://localhost:8080/api/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -u admin:admin123 http://localhost:8080/api/devices)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -u admin:admin123 http://localhost:8080/ui/)",
+      "Bash(curl -s -u admin:admin123 -D - http://localhost:8080/ui -o /dev/null)",
+      "Bash(curl -s -u admin:admin123 http://localhost:8080/api/devices/1001)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\({p['object_name']:p['present_value'] for p in d['points'][:4]}\\)\")",
+      "Bash(curl -s -u admin:admin123 \"http://localhost:8080/api/events?limit=3\")",
+      "Bash(python3 -c \"import sys,json; [print\\(e['event_type'], e['payload']\\) for e in json.load\\(sys.stdin\\)]\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('src/bacnet_lab/adapters/http/routers/simulation.py'\\).read\\(\\)\\); ast.parse\\(open\\('src/bacnet_lab/adapters/http/app.py'\\).read\\(\\)\\); ast.parse\\(open\\('src/bacnet_lab/adapters/http/schemas.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(python3 -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in ['src/bacnet_lab/adapters/http/routers/simulation.py','src/bacnet_lab/adapters/http/app.py','src/bacnet_lab/adapters/http/schemas.py']]; print\\('OK'\\)\")",
+      "Bash(curl -s -u admin:admin123 http://localhost:8080/api/simulation/status)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('src/bacnet_lab/adapters/simulation/world.py'\\).read\\(\\)\\); ast.parse\\(open\\('src/bacnet_lab/application/simulation_service.py'\\).read\\(\\)\\); print\\('syntax ok'\\)\")",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('src/bacnet_lab/adapters/simulation/world.py'\\).read\\(\\)\\); ast.parse\\(open\\('src/bacnet_lab/application/simulation_service.py'\\).read\\(\\)\\); print\\('syntax ok'\\)\")",
+      "Bash(python3 -c \"import yaml,glob; files=glob.glob\\('config/devices/*.yaml'\\); [yaml.safe_load\\(open\\(f\\)\\) for f in files]; print\\('OK', len\\(files\\), 'files'\\); [print\\(f\\) for f in sorted\\(files\\)]\")",
+      "Bash(curl -s -u admin:admin123 http://localhost:8080/api/devices)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(len\\(d\\),'devices'\\); [print\\(x['device_id'],x['name'],x['point_count']\\) for x in d]\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('gens',d['generator_count']\\); print\\('world',d.get\\('world_state'\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\({p['object_name'].split\\('/'\\)[1]:p['present_value'] for p in d['points'] if any\\(k in p['object_name'] for k in ['Valve','SupplyAirTemp','Return','Mixed']\\)}\\)\")",
+      "Bash(curl -s -u admin:admin123 http://localhost:8080/api/devices/6001)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\({p['object_name'].split\\('/'\\)[1]:p['present_value'] for p in d['points'] if any\\(k in p['object_name'] for k in ['ApparentPower','CurrentL1','ActivePower']\\)}\\)\")",
+      "Bash(python3 -c \"import sys,json;print\\(json.load\\(sys.stdin\\)['world_state']\\)\")",
+      "Bash(curl -s -u admin:admin123 http://localhost:8080/metrics)",
+      "Bash(curl -s -u admin:admin123 -X POST http://localhost:8080/api/simulation/faults -H \"Content-Type: application/json\" -d '{\"point_key\":\"1001/AHU-01/SupplyAirTemp\",\"kind\":\"stuck\",\"duration_s\":0}')",
+      "Bash(curl -s -u admin:admin123 http://localhost:8080/api/simulation/faults)",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(len\\(d\\),'devices'\\);[print\\(x['device_id'],x['name']\\) for x in d[7:]]\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\('running',d['running'],'| gens',d['generator_count'],'| speed',d['speed'],'| world',bool\\(d.get\\('world_state'\\)\\),'| models',len\\(d['models']\\)\\)\")",
+      "Bash(git -C /home/fusion-gpu/fusion-projects/bacnet-simulator status --short)",
+      "Bash(npm run *)",
+      "Read(//home/fusion-gpu/fusion-projects/bacnet-simulator/src/bacnet_lab/forecasting/**)",
+      "Bash(docker exec *)",
+      "Bash(docker exec bacnet-simulator-bacnet-lab-1 python -c ' *)",
+      "Read(//home/fusion-gpu/fusion-projects/bacnet-simulator/src/bacnet_lab/infrastructure/**)",
+      "Read(//home/fusion-gpu/fusion-projects/bacnet-simulator/src/bacnet_lab/**)",
+      "Read(//home/fusion-gpu/fusion-projects/bacnet-simulator/tests/unit/**)",
+      "Read(//home/fusion-gpu/fusion-projects/bacnet-simulator/**)",
+      "Bash(python3 -m py_compile src/bacnet_lab/domain/models/asset.py src/bacnet_lab/ports/repositories.py src/bacnet_lab/adapters/persistence/sqlite_repos.py src/bacnet_lab/adapters/persistence/migrations.py src/bacnet_lab/application/asset_service.py src/bacnet_lab/adapters/http/schemas.py src/bacnet_lab/adapters/http/routers/assets.py src/bacnet_lab/adapters/http/app.py src/bacnet_lab/bootstrap.py tests/unit/test_asset_service.py)",
+      "Bash(python3 -m py_compile src/bacnet_lab/application/prediction_service.py src/bacnet_lab/adapters/http/routers/predictions.py src/bacnet_lab/adapters/http/schemas.py src/bacnet_lab/bootstrap.py src/bacnet_lab/adapters/http/app.py tests/unit/test_prediction_service.py)"
+    ],
+    "additionalDirectories": [
+      "/home/fusion-gpu/fusion-projects/bacnet-simulator/src/bacnet_lab/forecasting",
+      "/home/fusion-gpu/fusion-projects/bacnet-simulator/src/bacnet_lab/infrastructure",
+      "/home/fusion-gpu/fusion-projects/bacnet-simulator/src/bacnet_lab/application",
+      "/home/fusion-gpu/fusion-projects/bacnet-simulator/src/bacnet_lab",
+      "/home/fusion-gpu/fusion-projects/bacnet-simulator/tests/unit"
+    ]
+  },
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--access-token",
+        "${SUPABASE_ACCESS_TOKEN}"
+      ],
+      "env": {}
+    }
+  }
+}
