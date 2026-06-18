@@ -13,13 +13,35 @@ let isManuallyClosed = false;
 // Subscriptions dictionary mapping message types to Sets of callback functions
 const listeners = {};
 
+// Status change listeners
+const statusListeners = new Set();
+let currentStatus = "disconnected"; // "connected" | "reconnecting" | "disconnected"
+
+function setStatus(newStatus) {
+  if (currentStatus === newStatus) return;
+  currentStatus = newStatus;
+  statusListeners.forEach((cb) => {
+    try {
+      cb(newStatus);
+    } catch (err) {
+      console.error("[WS] Error in status callback:", err);
+    }
+  });
+}
+
 /**
  * Resolves the absolute WebSocket URL from relative /api/ws.
  * Infers appropriate protocol (ws or wss) and embeds basic auth credentials if present.
  */
 function getWsUrl() {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const host = window.location.host;
+  let host = window.location.host;
+
+  // Local dev port replacement to bypass Vite proxy WebSocket limitations
+  if (host.includes("localhost:3003") || host.includes("127.0.0.1:3003")) {
+    host = host.replace("3003", "8080");
+  }
+
   let wsUrl = `${protocol}//`;
 
   const authHeader = getAuthHeader();
@@ -61,6 +83,7 @@ export function connect() {
     socket = new WebSocket(wsUrl);
   } catch (err) {
     console.error("[WS] WebSocket connection initialization failed:", err);
+    setStatus("reconnecting");
     scheduleReconnect();
     return;
   }
@@ -68,6 +91,7 @@ export function connect() {
   socket.onopen = () => {
     console.log("[WS] Connection established.");
     currentBackoff = MIN_BACKOFF; // Reset backoff on successful connection
+    setStatus("connected");
   };
 
   socket.onmessage = (event) => {
@@ -93,7 +117,10 @@ export function connect() {
     console.log(`[WS] Connection closed. Code: ${event.code}, Reason: ${event.reason || "None"}`);
     socket = null;
     if (!isManuallyClosed) {
+      setStatus("reconnecting");
       scheduleReconnect();
+    } else {
+      setStatus("disconnected");
     }
   };
 
@@ -124,6 +151,7 @@ function scheduleReconnect() {
 export function close() {
   console.log("[WS] Manually closing connection.");
   isManuallyClosed = true;
+  setStatus("disconnected");
 
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);
@@ -160,10 +188,27 @@ export function subscribe(type, cb) {
   };
 }
 
+/**
+ * Subscribes to connection status changes.
+ * Returns an unsubscribe function.
+ *
+ * @param {Function} cb - Callback invoked with the new status ("connected" | "reconnecting" | "disconnected")
+ * @returns {Function} Unsubscribe function
+ */
+export function onStatusChange(cb) {
+  statusListeners.add(cb);
+  cb(currentStatus); // Call immediately with initial state
+  return () => {
+    statusListeners.delete(cb);
+  };
+}
+
+
 const wsService = {
   connect,
   close,
   subscribe,
+  onStatusChange,
 };
 
 export default wsService;

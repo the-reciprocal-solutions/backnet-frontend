@@ -20,6 +20,8 @@ import PlaceholderPage from './pages/PlaceholderPage';
 import Sidebar         from './components/Sidebar';
 import LLMChat         from './components/LLMChat';
 import { isAuthed, clearAuth } from './services/auth';
+import ConnectionStatus from './components/ConnectionStatus';
+import { connect, close } from './services/ws';
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(isAuthed());
@@ -36,6 +38,15 @@ export default function App() {
     setLoggedIn(false);
   }
 
+  // Connect WebSocket automatically when logged in, close it when logged out
+  useEffect(() => {
+    if (loggedIn) {
+      connect();
+    } else {
+      close();
+    }
+  }, [loggedIn]);
+
   if (!loggedIn) {
     return <LoginPage onLogin={() => setLoggedIn(true)} />;
   }
@@ -51,6 +62,9 @@ export default function App() {
           minHeight: '100vh',
           maxWidth: 'calc(100vw - 220px)',
         }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+            <ConnectionStatus />
+          </div>
           <Routes>
             <Route path="/"            element={<DashboardPage />}  />
             <Route path="/devices"     element={<DevicesPage />}    />
