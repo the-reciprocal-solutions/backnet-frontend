@@ -8,6 +8,8 @@ import AlarmsPage      from './pages/AlarmsPage';
 import TrendsPage      from './pages/TrendsPage';
 import EventLogPage    from './pages/EventLogPage';
 import ScenariosPage   from './pages/ScenariosPage';
+import PredictionsPage from './pages/PredictionsPage';
+import DiscoveryPage   from './pages/DiscoveryPage';
 import LivePointsPage  from './pages/LivePointsPage';
 import ObjectExplorerPage from './pages/ObjectExplorerPage';
 import NetworkPage     from './pages/NetworkPage';
@@ -68,7 +70,9 @@ export default function App() {
           <Routes>
             <Route path="/"            element={<DashboardPage />}  />
             <Route path="/devices"     element={<DevicesPage />}    />
+            <Route path="/discovery"   element={<DiscoveryPage />}  />
             <Route path="/alarms"      element={<AlarmsPage />}     />
+            <Route path="/predictions" element={<PredictionsPage />} />
             <Route path="/trends"      element={<TrendsPage />}     />
             <Route path="/events"      element={<EventLogPage />}   />
             <Route path="/schedules"   element={<ScenariosPage />}  />

@@ -188,3 +188,98 @@ reasoning badge. Null-reasoning message → dot shows, no badge, no crash.
 - **Never commit `node_modules/` or `dist/`** — already gitignored, keep it that way.
 - The enriched-event schema is fixed. Build to it; flag gaps to the lead, don't redesign.
 - Ask early if a port interface or config shape is unclear — don't guess and rewrite core.
+
+---
+
+# Round 2 — Discovery, scale, webhooks, deeper reasoning
+
+Pipeline + WS + live grid are live. Next batch widens protocol coverage, scales
+the device fleet, fires webhooks after reasoning, and deepens the LLM failure
+explanations. Same rules as above: build to the contracts, flag gaps to the lead.
+
+## BACKEND
+
+### B4. Per-device protocol tag + discovery endpoint
+The frontend Discovery page (F4) must group devices by protocol. The backend
+must say which protocol each device speaks.
+
+- Add a `protocol` field to the device model + `DeviceResponse`
+  (`"bacnet" | "mqtt" | "knx" | "modbus"`). Default `"bacnet"` for existing rows
+  (coalesce NULL → `"bacnet"`, same pattern as the recent 500 fix).
+- New `GET /api/discovery` → devices grouped by protocol:
+  ```json
+  { "bacnet": [ {device_id, name, point_count, status} ], "mqtt": [...], "knx": [...], "modbus": [...] }
+  ```
+- Where a protocol has native discovery (BACnet Who-Is), surface discovered vs
+  configured count. Modbus/MQTT: list configured devices.
+
+**Acceptance:** `GET /api/discovery` returns the 4 protocol buckets; every device
+appears under exactly one; counts match `/api/devices`.
+
+**Do NOT:** invent a second device source of truth. Tag the existing devices.
+
+### B5. 100+ devices across protocols
+- Generate a fleet of 100+ devices spanning BACnet / MQTT / KNX / Modbus
+  (mix of AHU / FCU / sensors / meters). Use the existing YAML device-config
+  format under `config/devices/` (or a generator script that emits them).
+- Each device tagged with its `protocol` (B4). Each has >=1 dynamic analog point
+  so it is anomaly-capable (avoid all-`constant` devices).
+- Keep boot time sane — lazy/staggered start if needed.
+
+**Acceptance:** `/api/devices` lists 100+; `/api/discovery` shows a realistic
+split across all 4 protocols; injecting an anomaly on a sampled device still
+flows through to the live grid.
+
+**Do NOT:** hardcode 100 near-identical clones — vary type, points, ranges.
+
+### B6. Webhook fire AFTER LLM reasoning
+- Register a webhook subscriber on the bus for `AnomalyEnriched` **and**
+  `WorkOrderAssigned` (emitted only after the reasoning layer runs). POST the
+  event's `to_message()` JSON to a configurable webhook URL.
+- Reuse the existing `adapters/webhook/` delivery. Config: webhook URL + on/off
+  in settings (yaml + env), default off.
+- Retry once on failure, log on give-up. Must never block the pipeline.
+
+**Acceptance:** point webhook at `https://webhook.site/...`, inject an anomaly →
+the enriched + work-order payloads arrive AFTER reasoning (have `reasoning` /
+`failure_prob` populated). Bad URL → logged, pipeline unaffected.
+
+**Do NOT:** fire on raw `AlarmRaised` (pre-reasoning, no explanation yet).
+
+### L1. Deeper failure reasoning (LLM)
+- Extend `CopilotService.explain()` so reasoning carries more than a one-line
+  narration. Target richer fields the frontend can render: `root_cause`,
+  `contributing_factors[]`, `recommended_action`, `confidence`.
+- Keep it grounded — only cite measured evidence (forecast quantiles, driver
+  deltas, recent events). No invented numbers.
+- Extend the `reasoning` block of the `AnomalyEnriched` contract **additively**
+  (new optional fields only — do NOT rename/remove existing ones; the grid +
+  webhook consumers depend on them).
+
+**Acceptance:** enriched `reasoning` includes the new fields when the LLM is on;
+falls back gracefully (nulls) when off. Existing fields unchanged.
+
+**Do NOT:** break the frozen contract — additive fields only.
+
+## FRONTEND
+
+### F4. Discovery page (devices by protocol)
+**Files:** new `src/pages/DiscoveryPage.jsx`, route + sidebar entry.
+
+- Fetch `GET /api/discovery`. Render one section/column per protocol
+  (BACnet / MQTT / KNX / Modbus) with a device card list: name, device_id,
+  point count, status, protocol badge.
+- Show per-protocol counts + a total. Search/filter by name.
+- Click a device → reuse existing device detail (or link to Devices page).
+- Handle empty buckets; render cleanly with 100+ devices.
+
+**Acceptance:** page shows all 4 protocol groups with correct devices/counts;
+matches `/api/devices` total; renders cleanly with 100+ devices (B5).
+
+**Do NOT:** duplicate device-fetch logic — extend `src/services/api.js`.
+
+## Suggested Order
+1. **B4** (protocol tag + `/api/discovery`) — unblocks F4.
+2. **F4** (Discovery page) + **B5** (100+ devices) in parallel.
+3. **B6** (post-reasoning webhook) — independent.
+4. **L1** (deeper reasoning) — additive, last; coordinate the contract change with the lead.

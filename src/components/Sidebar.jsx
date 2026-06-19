@@ -5,7 +5,8 @@ const NAV = [
   {
     section: 'OVERVIEW',
     items: [
-      { path: '/',        label: 'Dashboard',      icon: '⊞' },
+      { path: '/',            label: 'Dashboard',      icon: '⊞' },
+      { path: '/predictions', label: 'Predictive AI',  icon: '🔮' },
       { path: '/alarms',  label: 'Alarms',          icon: '🔔' },
       { path: '/events',  label: 'Event Log',       icon: '📋' },
     ],
@@ -13,8 +14,9 @@ const NAV = [
   {
     section: 'DISCOVERY',
     items: [
-      { path: '/devices', label: 'Devices',         icon: '🖧' },
-      { path: '/objects', label: 'Object Explorer', icon: '⊡' },
+      { path: '/devices',   label: 'Devices',         icon: '🖧' },
+      { path: '/discovery', label: 'Discovery',       icon: '🛰' },
+      { path: '/objects',   label: 'Object Explorer', icon: '⊡' },
     ],
   },
   {

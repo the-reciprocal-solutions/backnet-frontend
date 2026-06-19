@@ -54,6 +54,7 @@ export const fetchHealth = (opts) => fetchJson("/api/health", opts);
 // ---- Devices ---------------------------------------------------------------
 export const fetchDevices = (opts) => fetchJson("/api/devices", opts);
 export const fetchDeviceDetail = (id, opts) => fetchJson(`/api/devices/${id}`, opts);
+export const fetchDiscovery = () => fetchJson("/api/discovery");
 export const writePointValue = (id, point_name, value) =>
   fetchJson(`/api/devices/${id}/points`, { method: "PUT", body: { point_name, value } });
 
@@ -61,6 +62,16 @@ export const writePointValue = (id, point_name, value) =>
 export const fetchAlarms = (activeOnly = false, limit = 100) =>
   fetchJson(`/api/alarms?active_only=${activeOnly}&limit=${limit}`);
 export const fetchEvents = (limit = 50) => fetchJson(`/api/events?limit=${limit}`);
+
+// ---- Predictive anomaly feed ----------------------------------------------
+// Live grid source: enriched anomalies + auto-assigned work orders.
+export const fetchAnomalyFeed = (includeAcked = false) =>
+  fetchJson(`/api/anomaly-feed?include_acked=${includeAcked}`);
+export const ackAnomaly = (feedId) =>
+  fetchJson(`/api/anomaly-feed/${encodeURIComponent(feedId)}/ack`, { method: "POST" });
+// One-shot fault injection: write an out-of-band value to a point.
+export const injectAnomaly = (deviceId, point, value) =>
+  fetchJson(`/api/devices/${deviceId}/inject-anomaly`, { method: "POST", body: { point, value } });
 
 // ---- Scenarios -------------------------------------------------------------
 export const fetchScenarios = () => fetchJson("/api/scenarios");

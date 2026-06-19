@@ -42,6 +42,17 @@ function getWsUrl() {
     host = host.replace("3003", "8080");
   }
 
+  // Prod split-domain: the SPA is served from `client.<backend-host>` but the
+  // backend (which terminates /api/ws with WebSocket upgrade) is `<backend-host>`.
+  // The client.* edge proxy does NOT upgrade WebSocket (504), so target the
+  // backend host directly. Override with VITE_WS_HOST when hosts differ otherwise.
+  const override = import.meta.env?.VITE_WS_HOST;
+  if (override) {
+    host = override;
+  } else if (host.startsWith("client.")) {
+    host = host.slice("client.".length);
+  }
+
   let wsUrl = `${protocol}//`;
 
   const authHeader = getAuthHeader();
