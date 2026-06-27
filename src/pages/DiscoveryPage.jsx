@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { fetchDiscovery } from '../services/api';
 
 // All four protocols are always rendered, even when empty, so the operator
@@ -60,6 +61,50 @@ export default function DiscoveryPage() {
 
   return (
     <div>
+      <style>{`
+        .discovery-section {
+          margin-bottom: 28px;
+        }
+        .discovery-section-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+        .discovery-section-title {
+          font-size: 16px;
+          font-weight: 700;
+          margin: 0;
+          color: #0f2d1e;
+        }
+        .discovery-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 14px;
+        }
+        .discovery-device-card {
+          background: #fff;
+          border: 1px solid #e6ece9;
+          border-radius: 10px;
+          padding: 12px 14px;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+        }
+        .discovery-device-card:hover {
+          border-color: #b5c3bc;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+          transform: translateY(-2px);
+        }
+        .discovery-empty-container {
+          background: #fff;
+          border: 1px solid #e6ece9;
+          border-radius: 10px;
+          padding: 16px;
+          color: #8aab9b;
+          font-size: 13px;
+        }
+      `}</style>
+
       <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 4 }}>Discovery</h1>
       <p style={{ color: '#667', marginBottom: 16 }}>
         Devices grouped by protocol. <b>{total}</b> total
@@ -89,53 +134,57 @@ export default function DiscoveryPage() {
       )}
 
       {data && PROTOCOLS.map((p) => {
-        const list = filtered[p];
+        const list = filtered[p] || [];
         const color = PROTO_COLOR[p];
         return (
-          <div key={p} style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: '#223' }}>
+          <div key={p} className="discovery-section">
+            <div className="discovery-section-header">
+              <h2 className="discovery-section-title">
                 {PROTO_LABEL[p]}
               </h2>
               <span style={{
-                ...pill, background: color + '22', color,
+                ...pill, background: color + '15', color,
               }}>
                 {list.length} {list.length === 1 ? 'device' : 'devices'}
               </span>
             </div>
 
             {list.length === 0 ? (
-              <div style={{ ...card, color: '#99a', fontSize: 13 }}>
+              <div className="discovery-empty-container">
                 {q ? 'No matching devices.' : '0 devices discovered on this protocol.'}
               </div>
             ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                gap: 12,
-              }}>
+              <div className="discovery-grid">
                 {list.map((d) => (
-                  <div key={`${p}-${d.device_id}`} style={deviceCard}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{
-                          width: 9, height: 9, borderRadius: '50%',
-                          background: statusColor(d.status), display: 'inline-block',
-                        }} />
-                        <span style={{ fontWeight: 600, color: '#1a2b22' }}>{d.name}</span>
-                      </span>
-                      <span style={{ ...protoBadge, background: color + '1a', color }}>
-                        {PROTO_LABEL[p]}
-                      </span>
+                  <Link
+                    key={`${p}-${d.device_id}`}
+                    to={`/devices?search=${encodeURIComponent(d.name)}`}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div className="discovery-device-card">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                          <span style={{
+                            width: 8, height: 8, borderRadius: '50%',
+                            background: statusColor(d.status), display: 'inline-block', flexShrink: 0,
+                          }} />
+                          <span style={{ fontWeight: 600, color: '#1a2b22', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '140px' }} title={d.name}>
+                            {d.name}
+                          </span>
+                        </span>
+                        <span style={{ ...protoBadge, background: color + '15', color }}>
+                          {PROTO_LABEL[p]}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#667', display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontFamily: 'monospace' }}>#{d.device_id}</span>
+                        <span>{d.point_count ?? 0} pts</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: statusColor(d.status), marginTop: 6, textTransform: 'capitalize', fontWeight: 600 }}>
+                        {d.status || 'unknown'}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 12, color: '#667', display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontFamily: 'monospace' }}>#{d.device_id}</span>
-                      <span>{d.point_count ?? 0} pts</span>
-                    </div>
-                    <div style={{ fontSize: 11, color: statusColor(d.status), marginTop: 6, textTransform: 'capitalize' }}>
-                      {d.status || 'unknown'}
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

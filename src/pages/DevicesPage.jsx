@@ -22,7 +22,10 @@ const TYPE_COLORS = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed', '#9ca3af'];
 
 export default function DevicesPage() {
   const [filter,  setFilter]  = useState('All');
-  const [search,  setSearch]  = useState('');
+  const [search,  setSearch]  = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('search') || '';
+  });
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
